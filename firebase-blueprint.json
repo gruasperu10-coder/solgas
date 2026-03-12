@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "Record": {
+      "title": "Record",
+      "description": "A record of an item pickup or return.",
+      "type": "object",
+      "properties": {
+        "personName": {
+          "type": "string",
+          "description": "The name of the person performing the action."
+        },
+        "eventTime": {
+          "type": "string",
+          "description": "The time the action was performed."
+        },
+        "roomName": {
+          "type": "string",
+          "description": "The name of the selected room.",
+          "enum": ["Solgas Hogar", "Solgas Energia", "Auma", "Espiritu Integro", "Espiritu Colaborativo", "Espiritu Agil", "Espiritu Innovador"]
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of record: retiro or devolucion.",
+          "enum": ["retiro", "devolucion"]
+        },
+        "signatureData": {
+          "type": "string",
+          "description": "Base64 encoded signature image data."
+        },
+        "relatedPickupId": {
+          "type": "string",
+          "description": "The ID of the related pickup record for a return."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The time the record was registered."
+        }
+      },
+      "required": ["personName", "eventTime", "roomName", "type", "signatureData", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/records/{recordId}": {
+      "schema": "Record",
+      "description": "Collection of pickup and return records."
+    }
+  }
+}

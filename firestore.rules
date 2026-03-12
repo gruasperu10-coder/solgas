@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: records
+    // Document ID: auto-generated
+    // Fields:
+    //   - personName: string (required)
+    //   - eventTime: string (required)
+    //   - roomName: string (required)
+    //   - type: string (required, 'retiro' or 'devolucion')
+    //   - signatureData: string (required, base64)
+    //   - relatedPickupId: string (optional)
+    //   - timestamp: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "gruasperu10@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidRecord(data) {
+      let validRooms = ["Solgas Hogar", "Solgas Energia", "Auma", "Espiritu Integro", "Espiritu Colaborativo", "Espiritu Agil", "Espiritu Innovador"];
+      let validTypes = ["retiro", "devolucion"];
+      
+      return data.keys().hasAll(['personName', 'eventTime', 'roomName', 'type', 'signatureData', 'timestamp']) &&
+             data.personName is string && data.personName.size() > 0 && data.personName.size() < 100 &&
+             data.eventTime is string && data.eventTime.size() > 0 &&
+             data.roomName in validRooms &&
+             data.type in validTypes &&
+             data.signatureData is string && data.signatureData.size() > 0 &&
+             data.timestamp is timestamp &&
+             (!('relatedPickupId' in data) || data.relatedPickupId == null || data.relatedPickupId is string);
+    }
+
+    match /records/{recordId} {
+      allow read: if true;
+      allow create: if isValidRecord(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}
